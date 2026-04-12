@@ -2,17 +2,17 @@
 
 #include <deque>
 #include <functional>
+#include <memory>
+#include <QColor>
 #include <QDialog>
-#include <QGraphicsOpacityEffect>
-#include <QLabel>
 #include <QPointer>
-#include <QPushButton>
 #include <QScreen>
-#include <QTimer>
 #include <QVariant>
-#include <QWidget>
+
+#include "ToastConfig.h"
 
 class Toast;
+class ToastPrivate;
 
 enum class ToastPreset {
     Success,
@@ -169,6 +169,19 @@ public:
      */
     ToastGlobalConfig &setPosition(ToastPosition position) noexcept;
 
+    /**
+     * @brief 获取按钮网格每行的默认按钮数量。
+     * @return 每行按钮数量（0 表示自动，即根据按钮数量自适应）。
+     */
+    [[nodiscard]] int buttonsPerRow() const noexcept;
+
+    /**
+     * @brief 设置按钮网格每行的默认按钮数量。
+     * @param count 每行按钮数量（0 表示自动，正数表示固定数量）。
+     * @return 当前对象的引用，支持链式调用。
+     */
+    ToastGlobalConfig &setButtonsPerRow(int count) noexcept;
+
 private:
     explicit ToastGlobalConfig() = default;
     int m_maximumOnScreen{3};
@@ -178,361 +191,7 @@ private:
     bool m_alwaysOnMainScreen{false};
     QScreen *m_fixedScreen{nullptr};
     ToastPosition m_position{ToastPosition::BottomRight};
-};
-
-/**
- * @brief 配置类，用于定义单个 Toast 实例的外观和行为。
- *
- */
-class ToastConfig final
-{
-public:
-    ToastConfig() = default;
-
-    /**
-     * @brief 根据枚举值获取对应的图标 QPixmap。
-     * @param enumIcon ToastIcon 枚举值。
-     * @return 对应图标的 QPixmap。
-     */
-    static QPixmap getIconFromEnum(ToastIcon enumIcon) noexcept;
-
-    /**
-     * @brief 将给定的 QImage 的颜色重新着色为指定的颜色，同时保留原始透明度。
-     * @param image 需要重新着色的 QImage。
-     * @param color 新的颜色。
-     * @return 重新着色后的 QImage。
-     */
-    static QImage recolorImage(QImage image, const QColor &color) noexcept;
-
-    /**
-     * @brief 应用预设样式到此配置。
-     * @param preset 要应用的预设（例如，Success, Warning）。
-     * @return 当前对象的引用，支持链式调用。
-     */
-    ToastConfig &setPreset(ToastPreset preset) noexcept;
-
-    /**
-     * @brief 设置 Toast 的显示持续时间。
-     * @param duration 持续时间，单位为毫秒；0 表示无限持续时间。
-     * @return 当前对象的引用，支持链式调用。
-     */
-    ToastConfig &setDuration(int duration) noexcept;
-
-    /**
-     * @brief 启用或禁用持续时间进度条的显示。
-     * @param enabled true 表示显示进度条。
-     * @return 当前对象的引用，支持链式调用。
-     */
-    ToastConfig &setShowDurationBar(bool enabled) noexcept;
-
-    /**
-     * @brief 设置标题文本。
-     * @param title 标题字符串。
-     * @return 当前对象的引用，支持链式调用。
-     */
-    ToastConfig &setTitle(const QString &title) noexcept;
-
-    /**
-     * @brief 设置主要内容文本。
-     * @param text 要显示的文本。
-     * @return 当前对象的引用，支持链式调用。
-     */
-    ToastConfig &setText(const QString &text) noexcept;
-
-    /**
-     * @brief 设置自定义图标 pixmap。
-     * @param icon 用作图标的 pixmap。
-     * @return 当前对象的引用，支持链式调用。
-     */
-    ToastConfig &setIcon(const QPixmap &icon) noexcept;
-
-    /**
-     * @brief 使用内置枚举设置图标。
-     * @param icon 图标类型（Success, Warning 等）。
-     * @return 当前对象的引用，支持链式调用。
-     */
-    ToastConfig &setIcon(ToastIcon icon) noexcept;
-
-    /**
-     * @brief 显示或隐藏图标区域。
-     * @param enabled true 表示显示图标。
-     * @return 当前对象的引用，支持链式调用。
-     */
-    ToastConfig &setShowIcon(bool enabled) noexcept;
-
-    /**
-     * @brief 设置图标的尺寸。
-     * @param size 期望的尺寸。
-     * @return 当前对象的引用，支持链式调用。
-     */
-    ToastConfig &setIconSize(const QSize &size) noexcept;
-
-    /**
-     * @brief 显示或隐藏图标与文本之间的垂直分隔线。
-     * @param enabled true 表示显示分隔线。
-     * @return 当前对象的引用，支持链式调用。
-     */
-    ToastConfig &setShowIconSeparator(bool enabled) noexcept;
-
-    /**
-     * @brief 设置图标分隔线的宽度。
-     * @param width 宽度，单位为像素。
-     * @return 当前对象的引用，支持链式调用。
-     */
-    ToastConfig &setIconSeparatorWidth(int width) noexcept;
-
-    /**
-     * @brief 设置自定义关闭按钮图标。
-     * @param icon 关闭按钮的 pixmap。
-     * @return 当前对象的引用，支持链式调用。
-     */
-    ToastConfig &setCloseButtonIcon(const QPixmap &icon) noexcept;
-
-    /**
-     * @brief 使用内置枚举设置关闭按钮图标。
-     * @param icon 应为 Close 图标。
-     * @return 当前对象的引用，支持链式调用。
-     */
-    ToastConfig &setCloseButtonIcon(ToastIcon icon) noexcept;
-
-    /**
-     * @brief 显示或隐藏关闭按钮。
-     * @param enabled true 表示显示按钮。
-     * @return 当前对象的引用，支持链式调用。
-     */
-    ToastConfig &setShowCloseButton(bool enabled) noexcept;
-
-    /**
-     * @brief 设置关闭按钮图标的尺寸。
-     * @param size 图标尺寸。
-     * @return 当前对象的引用，支持链式调用。
-     */
-    ToastConfig &setCloseButtonIconSize(const QSize &size) noexcept;
-
-    /**
-     * @brief 设置关闭按钮区域的总尺寸。
-     * @param size 区域尺寸。
-     * @return 当前对象的引用，支持链式调用。
-     */
-    ToastConfig &setCloseButtonSize(const QSize &size) noexcept;
-
-    /**
-     * @brief 设置关闭按钮在其区域内对齐方式。
-     * @param alignment Top, Middle 或 Bottom。
-     * @return 当前对象的引用，支持链式调用。
-     */
-    ToastConfig &setCloseButtonAlignment(ToastButtonAlignment alignment) noexcept;
-
-    /**
-     * @brief 设置淡入动画的持续时间。
-     * @param duration 持续时间，单位为毫秒。
-     * @return 当前对象的引用，支持链式调用。
-     */
-    ToastConfig &setFadeInDuration(int duration) noexcept;
-
-    /**
-     * @brief 设置淡出动画的持续时间。
-     * @param duration 持续时间，单位为毫秒。
-     * @return 当前对象的引用，支持链式调用。
-     */
-    ToastConfig &setFadeOutDuration(int duration) noexcept;
-
-    /**
-     * @brief 当鼠标悬停在 Toast 上时重置其持续时间计时器。
-     * @param enabled true 表示启用悬停时重置功能。
-     * @return 当前对象的引用，支持链式调用。
-     */
-    ToastConfig &setResetDurationOnHover(bool enabled) noexcept;
-
-    /**
-     * @brief 使 Toast 保持在其他窗口之上。
-     * @param enabled true 表示启用置顶行为。
-     * @return 当前对象的引用，支持链式调用。
-     */
-    ToastConfig &setStayOnTop(bool enabled) noexcept;
-
-    /**
-     * @brief 设置圆角矩形的圆角半径。
-     * @param borderRadius 半径，单位为像素。
-     * @return 当前对象的引用，支持链式调用。
-     */
-    ToastConfig &setBorderRadius(int borderRadius) noexcept;
-
-    /**
-     * @brief 设置 Toast 的背景颜色。
-     * @param color 背景颜色。
-     * @return 当前对象的引用，支持链式调用。
-     */
-    ToastConfig &setBackgroundColor(const QColor &color) noexcept;
-
-    /**
-     * @brief 设置标题文本的颜色。
-     * @param color 标题文本颜色。
-     * @return 当前对象的引用，支持链式调用。
-     */
-    ToastConfig &setTitleColor(const QColor &color) noexcept;
-
-    /**
-     * @brief 设置正文文本的颜色。
-     * @param color 正文文本颜色。
-     * @return 当前对象的引用，支持链式调用。
-     */
-    ToastConfig &setTextColor(const QColor &color) noexcept;
-
-    /**
-     * @brief 设置应用于图标的色调颜色。
-     * @param color 图标色调颜色。
-     * @return 当前对象的引用，支持链式调用。
-     */
-    ToastConfig &setIconColor(const QColor &color) noexcept;
-
-    /**
-     * @brief 设置图标分隔线的颜色。
-     * @param color 分隔线颜色。
-     * @return 当前对象的引用，支持链式调用。
-     */
-    ToastConfig &setIconSeparatorColor(const QColor &color) noexcept;
-
-    /**
-     * @brief 设置关闭按钮图标的颜色。
-     * @param color 关闭图标颜色。
-     * @return 当前对象的引用，支持链式调用。
-     */
-    ToastConfig &setCloseButtonIconColor(const QColor &color) noexcept;
-
-    /**
-     * @brief 设置持续时间进度条的颜色。
-     * @param color 进度条颜色。
-     * @return 当前对象的引用，支持链式调用。
-     */
-    ToastConfig &setDurationBarColor(const QColor &color) noexcept;
-
-    /**
-     * @brief 设置标题的字体。
-     * @param font 标题字体。
-     * @return 当前对象的引用，支持链式调用。
-     */
-    ToastConfig &setTitleFont(const QFont &font) noexcept;
-
-    /**
-     * @brief 设置正文文本的字体。
-     * @param font 正文文本字体。
-     * @return 当前对象的引用，支持链式调用。
-     */
-    ToastConfig &setTextFont(const QFont &font) noexcept;
-
-    /**
-     * @brief 设置围绕整个 Toast 的外边距。
-     * @param margins 边距（左、上、右、下）。
-     * @return 当前对象的引用，支持链式调用。
-     */
-    ToastConfig &setMargins(const QMargins &margins) noexcept;
-
-    /**
-     * @brief 设置围绕图标的边距。
-     * @param margins 图标专用边距。
-     * @return 当前对象的引用，支持链式调用。
-     */
-    ToastConfig &setIconMargins(const QMargins &margins) noexcept;
-
-    /**
-     * @brief 设置围绕图标区域（容器）的边距。
-     * @param margins 容器边距。
-     * @return 当前对象的引用，支持链式调用。
-     */
-    ToastConfig &setIconSectionMargins(const QMargins &margins) noexcept;
-
-    /**
-     * @brief 设置围绕文本区域（容器）的边距。
-     * @param margins 容器边距。
-     * @return 当前对象的引用，支持链式调用。
-     */
-    ToastConfig &setTextSectionMargins(const QMargins &margins) noexcept;
-
-    /**
-     * @brief 设置围绕关闭按钮的边距。
-     * @param margins 按钮边距。
-     * @return 当前对象的引用，支持链式调用。
-     */
-    ToastConfig &setCloseButtonMargins(const QMargins &margins) noexcept;
-
-    /**
-     * @brief 设置图标区域和文本区域之间的间距。
-     * @param spacing 间距，单位为像素。
-     * @return 当前对象的引用，支持链式调用。
-     */
-    ToastConfig &setTextSectionSpacing(int spacing) noexcept;
-
-    [[nodiscard]] int duration() const noexcept;
-    [[nodiscard]] bool showDurationBar() const noexcept;
-    [[nodiscard]] const QString &text() const noexcept;
-    [[nodiscard]] const QString &title() const noexcept;
-    [[nodiscard]] const QPixmap &icon() const noexcept;
-    [[nodiscard]] bool showIcon() const noexcept;
-    [[nodiscard]] const QSize &iconSize() const noexcept;
-    [[nodiscard]] bool showIconSeparator() const noexcept;
-    [[nodiscard]] int iconSeparatorWidth() const noexcept;
-    [[nodiscard]] const QPixmap &closeButtonIcon() const noexcept;
-    [[nodiscard]] bool showCloseButton() const noexcept;
-    [[nodiscard]] const QSize &closeButtonIconSize() const noexcept;
-    [[nodiscard]] const QSize &closeButtonSize() const noexcept;
-    [[nodiscard]] ToastButtonAlignment closeButtonAlignment() const noexcept;
-    [[nodiscard]] int fadeInDuration() const noexcept;
-    [[nodiscard]] int fadeOutDuration() const noexcept;
-    [[nodiscard]] bool resetDurationOnHover() const noexcept;
-    [[nodiscard]] bool stayOnTop() const noexcept;
-    [[nodiscard]] int borderRadius() const noexcept;
-    [[nodiscard]] const QColor &backgroundColor() const noexcept;
-    [[nodiscard]] const QColor &titleColor() const noexcept;
-    [[nodiscard]] const QColor &textColor() const noexcept;
-    [[nodiscard]] const QColor &iconColor() const noexcept;
-    [[nodiscard]] const QColor &iconSeparatorColor() const noexcept;
-    [[nodiscard]] const QColor &closeButtonIconColor() const noexcept;
-    [[nodiscard]] const QColor &durationBarColor() const noexcept;
-    [[nodiscard]] const QFont &titleFont() const noexcept;
-    [[nodiscard]] const QFont &textFont() const noexcept;
-    [[nodiscard]] const QMargins &margins() const noexcept;
-    [[nodiscard]] const QMargins &iconMargins() const noexcept;
-    [[nodiscard]] const QMargins &iconSectionMargins() const noexcept;
-    [[nodiscard]] const QMargins &textSectionMargins() const noexcept;
-    [[nodiscard]] const QMargins &closeButtonMargins() const noexcept;
-    [[nodiscard]] int textSectionSpacing() const noexcept;
-
-private:
-    int m_duration{5000};
-    bool m_showDurationBar{true};
-    QString m_title;
-    QString m_text;
-    QPixmap m_icon{getIconFromEnum(ToastIcon::Information)};
-    bool m_showIcon{false};
-    QSize m_iconSize{18, 18};
-    bool m_showIconSeparator{true};
-    int m_iconSeparatorWidth{2};
-    QPixmap m_closeButtonIcon{getIconFromEnum(ToastIcon::Close)};
-    bool m_showCloseButton{true};
-    QSize m_closeButtonIconSize{10, 10};
-    QSize m_closeButtonSize{24, 24};
-    ToastButtonAlignment m_closeButtonAlignment{ToastButtonAlignment::Middle};
-    int m_fadeInDuration = 250;
-    int m_fadeOutDuration = 250;
-    bool m_resetDurationOnHover{true};
-    bool m_stayOnTop{true};
-    int m_borderRadius{4};
-    QColor m_backgroundColor{ToastGlobalConfig::DefaultBackgroundColor};
-    QColor m_titleColor{ToastGlobalConfig::DefaultTitleColor};
-    QColor m_textColor{ToastGlobalConfig::DefaultTextColor};
-    QColor m_iconColor{ToastGlobalConfig::DefaultAccentColor};
-    QColor m_iconSeparatorColor{ToastGlobalConfig::DefaultIconSeparatorColor};
-    QColor m_closeButtonIconColor{ToastGlobalConfig::DefaultCloseButtonIconColor};
-    QColor m_durationBarColor{ToastGlobalConfig::DefaultAccentColor};
-    QFont m_titleFont{"Arial", 10, QFont::Bold};
-    QFont m_textFont{"Arial", 9};
-    QMargins m_margins{20, 18, 10, 18};
-    QMargins m_iconMargins{0, 0, 15, 0};
-    QMargins m_iconSectionMargins{0, 0, 15, 0};
-    QMargins m_textSectionMargins{0, 0, 15, 0};
-    QMargins m_closeButtonMargins{0, -8, 0, -8};
-    int m_textSectionSpacing = 8;
+    int m_buttonsPerRow{3}; // 全局默认每行 3 个按钮
 };
 
 /**
@@ -618,6 +277,9 @@ public:
      * @param text Toast 的正文内容。
      * @param duration 消息显示的持续时间（毫秒），0 表示无限时长。
      * @return 返回新创建的 Toast 对象指针（使用 QPointer 包装以保证安全）。
+     * @note 调用方必须在返回的指针上调用 present() 方法以显示 Toast，
+     *       否则 Toast 对象将不会被自动清理，导致内存泄漏。
+     *       示例: ToastManager::success("title", "text")->addButton("OK", []{})->present();
      */
     [[nodiscard]] static QPointer<Toast> success(
         const QString &title, const QString &text, int duration = 5000);
@@ -628,6 +290,8 @@ public:
      * @param text Toast 的正文内容。
      * @param duration 消息显示的持续时间（毫秒）。
      * @return 返回新创建的 Toast 对象指针（使用 QPointer 包装以保证安全）。
+     * @note 调用方必须在返回的指针上调用 present() 方法以显示 Toast，
+     *       否则 Toast 对象将不会被自动清理，导致内存泄漏。
      */
     [[nodiscard]] static QPointer<Toast> warning(
         const QString &title, const QString &text, int duration = 5000);
@@ -638,6 +302,8 @@ public:
      * @param text Toast 的正文内容。
      * @param duration 消息显示的持续时间（毫秒）。
      * @return 返回新创建的 Toast 对象指针（使用 QPointer 包装以保证安全）。
+     * @note 调用方必须在返回的指针上调用 present() 方法以显示 Toast，
+     *       否则 Toast 对象将不会被自动清理，导致内存泄漏。
      */
     [[nodiscard]] static QPointer<Toast> error(
         const QString &title, const QString &text, int duration = 5000);
@@ -648,6 +314,8 @@ public:
      * @param text Toast 的正文内容。
      * @param duration 消息显示的持续时间（毫秒）。
      * @return 返回新创建的 Toast 对象指针（使用 QPointer 包装以保证安全）。
+     * @note 调用方必须在返回的指针上调用 present() 方法以显示 Toast，
+     *       否则 Toast 对象将不会被自动清理，导致内存泄漏。
      */
     [[nodiscard]] static QPointer<Toast> information(
         const QString &title, const QString &text, int duration = 5000);
@@ -658,6 +326,8 @@ public:
      * @param text Toast 的正文内容。
      * @param duration 消息显示的持续时间（毫秒）。
      * @return 返回新创建的 Toast 对象指针（使用 QPointer 包装以保证安全）。
+     * @note 调用方必须在返回的指针上调用 present() 方法以显示 Toast，
+     *       否则 Toast 对象将不会被自动清理，导致内存泄漏。
      */
     [[nodiscard]] static QPointer<Toast> successDark(
         const QString &title, const QString &text, int duration = 5000);
@@ -668,6 +338,8 @@ public:
      * @param text Toast 的正文内容。
      * @param duration 消息显示的持续时间（毫秒）。
      * @return 返回新创建的 Toast 对象指针（使用 QPointer 包装以保证安全）。
+     * @note 调用方必须在返回的指针上调用 present() 方法以显示 Toast，
+     *       否则 Toast 对象将不会被自动清理，导致内存泄漏。
      */
     [[nodiscard]] static QPointer<Toast> warningDark(
         const QString &title, const QString &text, int duration = 5000);
@@ -678,6 +350,8 @@ public:
      * @param text Toast 的正文内容。
      * @param duration 消息显示的持续时间（毫秒）。
      * @return 返回新创建的 Toast 对象指针（使用 QPointer 包装以保证安全）。
+     * @note 调用方必须在返回的指针上调用 present() 方法以显示 Toast，
+     *       否则 Toast 对象将不会被自动清理，导致内存泄漏。
      */
     [[nodiscard]] static QPointer<Toast> errorDark(
         const QString &title, const QString &text, int duration = 5000);
@@ -688,16 +362,18 @@ public:
      * @param text Toast 的正文内容。
      * @param duration 消息显示的持续时间（毫秒）。
      * @return 返回新创建的 Toast 对象指针（使用 QPointer 包装以保证安全）。
+     * @note 调用方必须在返回的指针上调用 present() 方法以显示 Toast，
+     *       否则 Toast 对象将不会被自动清理，导致内存泄漏。
      */
     [[nodiscard]] static QPointer<Toast> informationDark(
         const QString &title, const QString &text, int duration = 5000);
 
 private:
     explicit ToastManager();
-    [[nodiscard]] static Toast *createPresetToast(
+    [[nodiscard]] static std::unique_ptr<Toast> createPresetToast(
         ToastPreset preset, const QString &title, const QString &text, int duration);
-    std::deque<Toast *> m_currentlyShown; ///< 当前正在屏幕上的 Toast 列表
-    std::deque<Toast *> m_queue;          ///< 等待显示的 Toast 队列
+    std::deque<QPointer<Toast>> m_currentlyShown; ///< 当前正在屏幕上的 Toast 列表
+    std::deque<QPointer<Toast>> m_queue;          ///< 等待显示的 Toast 队列
 };
 
 /**
@@ -713,6 +389,7 @@ public:
      * @param parent 父级 QWidget，默认为 nullptr。
      */
     explicit Toast(QWidget *parent = nullptr);
+    ~Toast();
 
     /**
      * @brief 设置 Toast 的配置。
@@ -878,25 +555,10 @@ private:
 
 private:
     friend class ToastManager;
+    friend class ToastPrivate;
+    friend class ToastAnimator;
+    [[nodiscard]] int notificationHeight() const noexcept;
 
-    ToastConfig m_config;
-    QVariant m_data;
-    int m_elapsedTime = 0;
-    bool m_fadingOut{false};
-    bool m_used{false};
-
-    QLabel *m_notification{nullptr};
-    std::array<QWidget *, 5> m_dropShadowLayer{};
-    QGraphicsOpacityEffect *m_opacityEffect{nullptr};
-    QPushButton *m_closeButton{nullptr};
-    QLabel *m_titleLabel{nullptr};
-    QLabel *m_textLabel{nullptr};
-    QPushButton *m_iconWidget{nullptr};
-    QWidget *m_iconSeparator{nullptr};
-    QWidget *m_durationBarContainer{nullptr};
-    QWidget *m_durationBar{nullptr};
-    QWidget *m_durationBarChunk{nullptr};
-    QTimer *m_durationTimer{nullptr};
-    QTimer *m_durationBarTimer{nullptr};
-    std::vector<std::pair<QString, std::function<void()>>> m_buttons;
+    Q_DECLARE_PRIVATE(Toast)
+    QScopedPointer<ToastPrivate> d_ptr;
 };

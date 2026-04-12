@@ -27,6 +27,10 @@ set(PROJECT_SOURCES
     main.cpp
     ToastWindow.h ToastWindow.cpp
     Toast.h Toast.cpp
+    ToastConfig.h ToastConfig.cpp
+    ToastPrivate.h ToastPrivate.cpp
+    ToastLayoutBuilder.h ToastLayoutBuilder.cpp
+    ToastAnimator.h ToastAnimator.cpp
     ${RESOURCE_SRC}
 )
 

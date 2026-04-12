@@ -13,10 +13,12 @@ int main(int argc, char *argv[])
     Q_INIT_RESOURCE(resources);
     ToastWindow w;
     {
+        ToastGlobalConfig::instance().setButtonsPerRow(2);
         auto t = ToastManager::success(
             "Success! Confirmation email sent.", "Check your email to complete signup.\n1\n2\n3\n4");
         t->addButton("Button1", []() { qDebug() << "Click Button1"; })
             .addButton("Button2", []() { qDebug() << "Click Button2"; })
+            .addButton("Button3", []() { qDebug() << "Click Button3"; })
             .present();
     }
     w.show();
